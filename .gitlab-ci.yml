@@ -3,7 +3,6 @@ include:
   - template: Security/Secret-Detection.gitlab-ci.yml
 
 stages:
-  - install
   - quality
   - test
   - secret-detection
@@ -20,6 +19,8 @@ variables:
   before_script:
     - corepack enable
     - corepack prepare pnpm@10.22.0 --activate
+    - pnpm config set store-dir "$PNPM_STORE_PATH"
+    - pnpm install --frozen-lockfile
   cache:
     key:
       files:
@@ -33,32 +34,21 @@ sast:
 secret_detection:
   stage: secret-detection
 
-install:
-  extends: .node
-  stage: install
-  script:
-    - pnpm config set store-dir "$PNPM_STORE_PATH"
-    - pnpm install --frozen-lockfile=false
-  artifacts:
-    paths:
-      - node_modules
-      - "**/node_modules"
-      - apps/api/node_modules/.prisma
-    expire_in: 1 hour
-
 lint_typecheck:
   extends: .node
   stage: quality
-  needs: ["install"]
+  needs: []
   script:
+    - pnpm --filter @a11y/core build
     - pnpm typecheck
   allow_failure: true
 
 test:
   extends: .node
   stage: quality
-  needs: ["install"]
+  needs: []
   script:
+    - pnpm --filter @a11y/core build
     - pnpm --filter @a11y/core test
     - pnpm --filter @a11y/widget test
     - pnpm --filter @a11y/scanner test
@@ -67,7 +57,7 @@ test:
 build:
   extends: .node
   stage: build
-  needs: ["install", "test"]
+  needs: ["test"]
   script:
     - pnpm --filter @a11y/core build
     - pnpm --filter @a11y/fonts build
