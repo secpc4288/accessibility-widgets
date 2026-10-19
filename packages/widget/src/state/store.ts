@@ -13,6 +13,7 @@ export class AccessibilityStore {
   constructor(userConfig?: Partial<WidgetConfig>) {
     this.config = mergeWidgetConfig(userConfig);
     this.state = this.load();
+    this.applyDefaultsIfEmpty();
   }
 
   getState(): FeatureState {
@@ -44,13 +45,27 @@ export class AccessibilityStore {
 
   reset(): void {
     this.state = {};
+    this.applyDefaultsIfEmpty();
     this.persist();
     this.emit();
+  }
+
+  replaceConfig(config: WidgetConfig): void {
+    this.config = mergeWidgetConfig(config);
   }
 
   subscribe(listener: StoreListener): () => void {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
+  }
+
+  private applyDefaultsIfEmpty(): void {
+    for (const entry of this.config.features ?? []) {
+      if (!entry.enabled) continue;
+      if (entry.defaultLevel === null || entry.defaultLevel === undefined) continue;
+      if (this.state[entry.id] !== undefined) continue;
+      this.state[entry.id] = entry.defaultLevel;
+    }
   }
 
   private emit(): void {
@@ -59,6 +74,7 @@ export class AccessibilityStore {
   }
 
   private persist(): void {
+    if (this.config.persistPreferences === false) return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
     } catch {
@@ -67,6 +83,7 @@ export class AccessibilityStore {
   }
 
   private load(): FeatureState {
+    if (this.config.persistPreferences === false) return {};
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return {};

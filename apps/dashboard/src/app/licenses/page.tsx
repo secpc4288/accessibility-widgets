@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui";
-import { apiGet } from "@/lib/api";
+import { serverApiGet } from "@/lib/api-server";
 
 type License = {
   id: string;
@@ -13,7 +13,7 @@ type License = {
 export default async function LicensesPage() {
   let licenses: License[] = [];
   try {
-    licenses = await apiGet<License[]>("/v1/licenses");
+    licenses = await serverApiGet<License[]>("/v1/licenses");
   } catch {
     licenses = [];
   }

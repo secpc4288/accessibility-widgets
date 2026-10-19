@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui";
-import { apiGet } from "@/lib/api";
+import { serverApiGet } from "@/lib/api-server";
 
 type User = {
   id: string;
@@ -12,7 +12,7 @@ type User = {
 export default async function UsersPage() {
   let users: User[] = [];
   try {
-    users = await apiGet<User[]>("/v1/users");
+    users = await serverApiGet<User[]>("/v1/users");
   } catch {
     users = [];
   }

@@ -1,5 +1,5 @@
 import { Stat, Card } from "@/components/ui";
-import { apiGet } from "@/lib/api";
+import { serverApiGet } from "@/lib/api-server";
 
 type Site = {
   id: string;
@@ -13,7 +13,7 @@ export default async function HomePage() {
   let sites: Site[] = [];
   let error: string | null = null;
   try {
-    sites = await apiGet<Site[]>("/v1/sites");
+    sites = await serverApiGet<Site[]>("/v1/sites");
   } catch {
     error = "تعذر الاتصال بالـ API. شغّل apps/api على المنفذ 8787.";
   }

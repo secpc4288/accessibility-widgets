@@ -20,4 +20,24 @@ describe("AccessibilityStore", () => {
     const b = new AccessibilityStore();
     expect(b.get("hide-images")).toBe(true);
   });
+
+  it("skips persistence when persistPreferences is false", () => {
+    const a = new AccessibilityStore({ persistPreferences: false });
+    a.set("bigger-text", "large");
+    expect(localStorage.getItem("a11y-platform-state-v1")).toBeNull();
+  });
+
+  it("applies defaultLevel from feature config when empty", () => {
+    const store = new AccessibilityStore({
+      features: [
+        {
+          id: "bigger-text",
+          enabled: true,
+          order: 0,
+          defaultLevel: "medium",
+        },
+      ],
+    });
+    expect(store.get("bigger-text")).toBe("medium");
+  });
 });

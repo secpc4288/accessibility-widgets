@@ -60,6 +60,16 @@ export const locales: Record<string, LocaleDict> = {
     language: "اللغة",
     active: "مفعّل",
     inactive: "معطّل",
+    decrease: "تقليل",
+    increase: "زيادة",
+    level: "المستوى",
+    hideWidget: "إخفاء الأداة لهذه الجلسة",
+    accessibilityStatement: "بيان إمكانية الوصول",
+    switchLanguage: "تبديل اللغة",
+    featuresActive: "خصائص مفعّلة",
+    resetDone: "تمت إعادة التعيين",
+    featureOn: "تم التفعيل",
+    featureOff: "تم الإيقاف",
   },
   en: {
     menuTitle: "Accessibility Menu",
@@ -120,8 +130,29 @@ export const locales: Record<string, LocaleDict> = {
     language: "Language",
     active: "On",
     inactive: "Off",
+    decrease: "Decrease",
+    increase: "Increase",
+    level: "Level",
+    hideWidget: "Hide widget for this session",
+    accessibilityStatement: "Accessibility statement",
+    switchLanguage: "Switch language",
+    featuresActive: "active features",
+    resetDone: "Preferences reset",
+    featureOn: "Enabled",
+    featureOff: "Disabled",
   },
 };
+
+/** Resolve a label with optional per-language overrides from admin config. */
+export function tLabel(
+  lang: string,
+  key: string,
+  overrides?: Record<string, Partial<Record<string, string>>>,
+): string {
+  const fromOverride = overrides?.[lang]?.[key] ?? overrides?.["*"]?.[key];
+  if (fromOverride) return fromOverride;
+  return t(lang, key);
+}
 
 export function t(lang: string, key: string): string {
   const dict = locales[lang] ?? locales.ar;

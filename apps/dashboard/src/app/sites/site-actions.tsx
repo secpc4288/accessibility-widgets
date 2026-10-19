@@ -1,74 +1,63 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui";
+import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button, TextInput } from "@/components/ui";
 import { apiSend } from "@/lib/api";
 
-export function SiteActions({
-  siteId,
-  initialConfig,
-}: {
-  siteId?: string;
-  initialConfig?: Record<string, unknown>;
-}) {
+export function SiteActions() {
+  const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [domain, setDomain] = useState("");
 
-  async function createSite() {
+  async function createSite(e: FormEvent) {
+    e.preventDefault();
     setBusy(true);
     setMsg("");
     try {
-      await apiSend("/v1/sites", "POST", {
-        name: "موقع جديد",
-        domain: "example.com",
-      });
+      const site = await apiSend<{ id: string }>("/v1/sites", "POST", { name, domain });
       setMsg("تم إنشاء الموقع");
-      window.location.reload();
-    } catch {
-      setMsg("فشل الإنشاء — تأكد أن الـ API يعمل");
+      setOpen(false);
+      setName("");
+      setDomain("");
+      router.push(`/sites/${site.id}`);
+      router.refresh();
+    } catch (err) {
+      setMsg(err instanceof Error ? err.message : "فشل الإنشاء");
     } finally {
       setBusy(false);
     }
   }
 
-  async function saveConfig() {
-    if (!siteId) return;
-    setBusy(true);
-    try {
-      await apiSend(`/v1/sites/${siteId}/config`, "PUT", {
-        ...(initialConfig || {}),
-        language: "ar",
-        position: "bottom-left",
-        colors: { primary: "#0B5FFF" },
-      });
-      setMsg("تم حفظ الإعدادات");
-    } catch {
-      setMsg("فشل الحفظ");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  if (!siteId) {
+  if (!open) {
     return (
       <div className="flex items-center gap-2">
-        <Button disabled={busy} onClick={createSite}>
-          إضافة موقع
-        </Button>
+        <Button onClick={() => setOpen(true)}>إضافة موقع</Button>
         {msg && <span className="text-xs text-slate-500">{msg}</span>}
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-end gap-2">
-      <Button variant="ghost" disabled={busy} onClick={saveConfig}>
-        حفظ إعدادات الأداة
+    <form onSubmit={createSite} className="flex flex-wrap items-end gap-2 rounded-2xl border border-slate-200 bg-white p-3">
+      <TextInput label="اسم الموقع" value={name} onChange={(e) => setName(e.target.value)} required />
+      <TextInput
+        label="النطاق"
+        value={domain}
+        onChange={(e) => setDomain(e.target.value)}
+        placeholder="example.com"
+        required
+      />
+      <Button type="submit" disabled={busy}>
+        حفظ
+      </Button>
+      <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+        إلغاء
       </Button>
       {msg && <span className="text-xs text-slate-500">{msg}</span>}
-      <div className="rounded-xl border border-dashed border-slate-300 p-3 text-xs text-slate-500">
-        معاينة حية: اللغة عربي · الموضع يسار سفلي · اللون الأساسي أزرق
-      </div>
-    </div>
+    </form>
   );
 }

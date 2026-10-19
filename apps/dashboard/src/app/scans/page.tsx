@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui";
-import { apiGet } from "@/lib/api";
+import { serverApiGet } from "@/lib/api-server";
 import { ScanForm } from "./scan-form";
 
 type Scan = {
@@ -15,8 +15,8 @@ export default async function ScansPage() {
   let scans: Scan[] = [];
   let sites: Array<{ id: string; name: string }> = [];
   try {
-    scans = await apiGet<Scan[]>("/v1/scans");
-    sites = await apiGet("/v1/sites");
+    scans = await serverApiGet<Scan[]>("/v1/scans");
+    sites = await serverApiGet("/v1/sites");
   } catch {
     /* offline */
   }

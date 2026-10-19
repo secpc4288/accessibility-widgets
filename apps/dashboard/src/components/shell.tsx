@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { clsx } from "clsx";
 import type { PropsWithChildren } from "react";
+import { apiSend, setStoredToken } from "@/lib/api";
+import { Button } from "@/components/ui";
 
 const links = [
   { href: "/", label: "نظرة عامة" },
@@ -16,6 +18,22 @@ const links = [
 
 export function Shell({ children }: PropsWithChildren) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  if (pathname === "/login") {
+    return <>{children}</>;
+  }
+
+  async function logout() {
+    try {
+      await apiSend("/v1/auth/logout", "POST");
+    } catch {
+      /* ignore */
+    }
+    setStoredToken(null);
+    router.replace("/login");
+  }
+
   return (
     <div className="min-h-screen md:grid md:grid-cols-[260px_1fr]">
       <aside className="border-l border-slate-200 bg-white p-4">
@@ -30,13 +48,20 @@ export function Shell({ children }: PropsWithChildren) {
               href={l.href}
               className={clsx(
                 "block rounded-xl px-3 py-2 text-sm font-medium",
-                pathname === l.href ? "bg-brand text-white" : "text-slate-700 hover:bg-slate-100",
+                pathname === l.href || (l.href !== "/" && pathname.startsWith(l.href))
+                  ? "bg-brand text-white"
+                  : "text-slate-700 hover:bg-slate-100",
               )}
             >
               {l.label}
             </Link>
           ))}
         </nav>
+        <div className="mt-8">
+          <Button variant="ghost" className="w-full" onClick={() => void logout()}>
+            تسجيل الخروج
+          </Button>
+        </div>
       </aside>
       <main className="p-6 md:p-8">{children}</main>
     </div>
