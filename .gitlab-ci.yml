@@ -1,26 +1,40 @@
+include:
+  - template: Security/SAST.gitlab-ci.yml
+  - template: Security/Secret-Detection.gitlab-ci.yml
+
 stages:
   - install
   - quality
+  - test
+  - secret-detection
   - build
-
-default:
-  image: node:20
-  before_script:
-    - corepack enable
-    - corepack prepare pnpm@10.22.0 --activate
-
-cache:
-  key:
-    files:
-      - pnpm-lock.yaml
-  paths:
-    - .pnpm-store
 
 variables:
   PNPM_HOME: /root/.local/share/pnpm
   PNPM_STORE_PATH: "$CI_PROJECT_DIR/.pnpm-store"
+  SECRET_DETECTION_ENABLED: "true"
+
+# Kept off `default` so the SAST/secret-detection analyzer images are not affected.
+.node:
+  image: node:20
+  before_script:
+    - corepack enable
+    - corepack prepare pnpm@10.22.0 --activate
+  cache:
+    key:
+      files:
+        - pnpm-lock.yaml
+    paths:
+      - .pnpm-store
+
+sast:
+  stage: test
+
+secret_detection:
+  stage: secret-detection
 
 install:
+  extends: .node
   stage: install
   script:
     - pnpm config set store-dir "$PNPM_STORE_PATH"
@@ -33,6 +47,7 @@ install:
     expire_in: 1 hour
 
 lint_typecheck:
+  extends: .node
   stage: quality
   needs: ["install"]
   script:
@@ -40,6 +55,7 @@ lint_typecheck:
   allow_failure: true
 
 test:
+  extends: .node
   stage: quality
   needs: ["install"]
   script:
@@ -49,6 +65,7 @@ test:
     - pnpm --filter @a11y/api test
 
 build:
+  extends: .node
   stage: build
   needs: ["install", "test"]
   script:
